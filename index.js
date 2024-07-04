@@ -1,32 +1,74 @@
-// index.js
-// where your node app starts
-
 // init project
-var express = require('express');
+var express = require("express");
+const { DateTime } = require("luxon");
+
 var app = express();
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
+// enable CORS
+var cors = require("cors");
+app.use(cors({ optionsSuccessStatus: 200 }));
 
-// http://expressjs.com/en/starter/static-files.html
-app.use(express.static('public'));
+app.use(express.static("public"));
 
-// http://expressjs.com/en/starter/basic-routing.html
 app.get("/", function (req, res) {
-  res.sendFile(__dirname + '/views/index.html');
+	res.sendFile(__dirname + "/views/index.html");
 });
 
-
-// your first API endpoint... 
 app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+	res.json({ greeting: "hello API" });
 });
 
+app.get("/api", function (req, res) {
+	let dateTime = DateTime.now();
 
+	dateTime = dateTime.setZone("utc");
+
+	const unixTimestamp = dateTime.toMillis();
+	const utcTimestamp = dateTime.toFormat("ccc, dd LLL yyyy HH:mm:ss 'GMT'");
+
+	res.send({
+		unix: unixTimestamp,
+		utc: utcTimestamp,
+	});
+});
+
+app.get("/api/:date", function (req, res) {
+	// get the date parameter
+	let date = req.params.date;
+	try {
+		let dateTime;
+
+		if (!date) {
+			// Date is empty
+			dateTime = DateTime.now();
+		} else if (!isNaN(Date.parse(date))) {
+			// Date is valid date string
+			dateTime = DateTime.fromJSDate(new Date(date));
+		} else if (!isNaN(date) && !isNaN(parseFloat(date))) {
+			// Date is in milliseconds
+			dateTime = DateTime.fromMillis(parseInt(date, 10));
+		} else {
+			throw new Error("Invalid Date");
+		}
+
+		dateTime = dateTime.setZone("utc");
+		// Convert to unix and UTC timestamps
+		const unixTimestamp = dateTime.toMillis();
+		const utcTimestamp = dateTime.toFormat("ccc, dd LLL yyyy HH:mm:ss 'GMT'");
+
+		// Send back response
+		res.send({
+			unix: unixTimestamp,
+			utc: utcTimestamp,
+		});
+	} catch (err) {
+		res.send({
+			error: err.message,
+		});
+	}
+});
 
 // Listen on port set in environment variable or default to 3000
 var listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+	console.log("Your app is listening on port " + listener.address().port);
 });
