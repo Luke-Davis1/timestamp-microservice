@@ -32,6 +32,7 @@ app.get("/api", function (req, res) {
 	});
 });
 
+// endpoint
 app.get("/api/:date", function (req, res) {
 	// get the date parameter
 	let date = req.params.date;
